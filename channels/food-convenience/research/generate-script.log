@@ -17,3 +17,7 @@
 2026-08-27 23:50:36,279 [INFO] claudeが型を「雑学系」と判断しました。
 2026-08-27 23:50:36,283 [INFO] 台本を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\scripts\trivia-業務スーパーの冷凍餃子にまつわる、知られざる工夫.md に保存しました。
 2026-08-27 23:50:36,283 [INFO] === 台本生成成功 ===
+2026-08-28 00:14:55,023 [INFO] === 台本生成開始（theme=None, dry_run=True） ===
+2026-08-28 00:14:55,039 [INFO] テーマ「[ダミー] テーマ案サンプル1」（型: 比較(2項目)）をtheme-stock.xlsxの2行目から選択しました。
+2026-08-28 00:14:55,042 [INFO] 台本を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\scripts\comparison2-[ダミー]テーマ案サンプル1.md に保存しました。
+2026-08-28 00:14:55,042 [INFO] === 台本生成成功 ===

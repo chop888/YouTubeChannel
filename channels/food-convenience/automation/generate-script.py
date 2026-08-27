@@ -18,12 +18,13 @@ from claude_client import DEFAULT_CLAUDE_CMD, call_claude, setup_logging, strip_
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 CHANNEL_DIR = SCRIPT_DIR.parent
+SCRIPTS_DIR = CHANNEL_DIR / "scripts"
 DEFAULT_XLSX = CHANNEL_DIR / "research" / "theme-stock.xlsx"
 LOG_FILE = CHANNEL_DIR / "research" / "generate-script.log"
 TEMPLATES_DIR = CHANNEL_DIR / "docks" / "script-templates"
 COMMON_OPENING_FILE = TEMPLATES_DIR / "00_common_opening_template.md"
 CHARACTERS_FILE = CHANNEL_DIR / "docks" / "02-characters.md"
-STYLE_SAMPLE_FILE = SCRIPT_DIR / "comparison-maratang.md"
+STYLE_SAMPLE_FILE = SCRIPTS_DIR / "comparison-maratang.md"
 
 STATUS_NOT_STARTED = "未着手"
 STATUS_SCRIPTED = "台本作成済み"
@@ -227,7 +228,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="theme-stock.xlsxを使った台本自動生成スクリプト")
     parser.add_argument("--theme", type=str, default=None, help="生成するテーマ名を直接指定する")
     parser.add_argument("--xlsx", type=Path, default=DEFAULT_XLSX, help="theme-stock.xlsxのパス")
-    parser.add_argument("--output-dir", type=Path, default=SCRIPT_DIR, help="台本の保存先ディレクトリ")
+    parser.add_argument("--output-dir", type=Path, default=SCRIPTS_DIR, help="台本の保存先ディレクトリ")
     parser.add_argument("--timeout", type=int, default=300, help="claude呼び出しのタイムアウト秒数")
     parser.add_argument("--dry-run", action="store_true", help="claudeを呼ばずダミー台本で動作確認する")
     parser.add_argument(
