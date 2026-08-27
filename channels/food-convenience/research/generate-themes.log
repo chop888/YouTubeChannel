@@ -1,0 +1,18 @@
+2026-08-27 22:25:18,544 [INFO] === テーマ案生成開始（count=10, dry_run=False） ===
+2026-08-27 22:25:18,582 [ERROR] テーマ案生成に失敗しました: 'NoneType' object is not subscriptable
+2026-08-27 22:25:18,583 [INFO] === テーマ案生成失敗 ===
+2026-08-27 22:45:05,999 [INFO] === テーマ案生成開始（count=10, dry_run=False） ===
+2026-08-27 22:45:31,224 [INFO] 10件のテーマ案を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\research\theme-stock.xlsx に追記しました。
+2026-08-27 22:45:31,224 [INFO] === テーマ案生成成功 ===
+2026-08-27 22:53:33,737 [INFO] === テーマ案生成開始（count=6, dry_run=False） ===
+2026-08-27 22:54:03,256 [INFO] 6件のテーマ案を channels\food-convenience\research\theme-stock-test.xlsx に追記しました。
+2026-08-27 22:54:03,256 [INFO] === テーマ案生成成功 ===
+2026-08-27 23:09:31,563 [INFO] === テーマ案生成開始（count=10, dry_run=False） ===
+2026-08-27 23:10:11,089 [INFO] 10件のテーマ案を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\research\theme-stock.xlsx に追記しました。
+2026-08-27 23:10:11,089 [INFO] === テーマ案生成成功 ===
+2026-08-27 23:25:37,965 [INFO] === テーマ案生成開始（count=10, dry_run=False） ===
+2026-08-27 23:26:06,737 [INFO] 10件のテーマ案を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\research\theme-stock.xlsx に追記しました。
+2026-08-27 23:26:06,737 [INFO] === テーマ案生成成功 ===
+2026-08-27 23:44:44,026 [INFO] === テーマ案生成開始（count=10, dry_run=True） ===
+2026-08-27 23:44:44,045 [INFO] 10件のテーマ案を channels\food-convenience\research\theme-stock-refactor-test.xlsx に追記しました。
+2026-08-27 23:44:44,045 [INFO] === テーマ案生成成功 ===

@@ -1,0 +1,19 @@
+2026-08-27 23:46:37,773 [INFO] === 台本生成開始（theme=None, dry_run=True） ===
+2026-08-27 23:46:37,787 [INFO] テーマ「セブンイレブンとローソンのツナマヨおにぎりを価格とグラム数で比較」（型: 比較(2項目)）をtheme-stock.xlsxの2行目から選択しました。
+2026-08-27 23:46:37,789 [INFO] 台本を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\scripts\comparison2-セブンイレブンとローソンのツナマヨおにぎりを価格.md に保存しました。
+2026-08-27 23:46:37,790 [INFO] === 台本生成成功 ===
+2026-08-27 23:46:50,758 [INFO] === 台本生成開始（theme=セブンイレブンとローソンのツナマヨおにぎりを価格とグラム数で比較, dry_run=False） ===
+2026-08-27 23:46:50,771 [INFO] テーマ「セブンイレブンとローソンのツナマヨおにぎりを価格とグラム数で比較」（型: 比較(2項目)）をtheme-stock.xlsxの2行目から選択しました。
+2026-08-27 23:47:26,420 [INFO] 台本を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\scripts\comparison2-セブンイレブンとローソンのツナマヨおにぎりを価格.md に保存しました。
+2026-08-27 23:47:26,454 [INFO] theme-stock.xlsxの2行目のステータスを「台本作成済み」に更新しました。
+2026-08-27 23:47:26,454 [INFO] === 台本生成成功 ===
+2026-08-27 23:48:30,672 [INFO] === 台本生成開始（theme=セブンイレブンとローソンのツナマヨおにぎりを価格とグラム数で比較, dry_run=False） ===
+2026-08-27 23:48:30,690 [INFO] テーマ「セブンイレブンとローソンのツナマヨおにぎりを価格とグラム数で比較」（型: 比較(2項目)）をtheme-stock.xlsxの2行目から選択しました。
+2026-08-27 23:49:18,805 [INFO] 台本を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\scripts\comparison2-セブンイレブンとローソンのツナマヨおにぎりを価格.md に保存しました。
+2026-08-27 23:49:18,860 [INFO] theme-stock.xlsxの2行目のステータスを「台本作成済み」に更新しました。
+2026-08-27 23:49:18,861 [INFO] === 台本生成成功 ===
+2026-08-27 23:49:30,571 [INFO] === 台本生成開始（theme=業務スーパーの冷凍餃子にまつわる、知られざる工夫の雑学3選, dry_run=False） ===
+2026-08-27 23:49:30,588 [INFO] テーマ「業務スーパーの冷凍餃子にまつわる、知られざる工夫の雑学3選」はtheme-stock.xlsxに見つからないため、型をclaudeに判断させます。
+2026-08-27 23:50:36,279 [INFO] claudeが型を「雑学系」と判断しました。
+2026-08-27 23:50:36,283 [INFO] 台本を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\scripts\trivia-業務スーパーの冷凍餃子にまつわる、知られざる工夫.md に保存しました。
+2026-08-27 23:50:36,283 [INFO] === 台本生成成功 ===
