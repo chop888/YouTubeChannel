@@ -10,7 +10,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
@@ -37,6 +37,8 @@ ALLOWED_TYPES = [
     "単品ディープダイブ",
     "定点観測",
 ]
+
+BREAKING_TYPE = "速報ショート型"
 
 logger = logging.getLogger("generate-themes")
 
@@ -71,6 +73,69 @@ def build_prompt(count: int) -> str:
   {{"type": "型のラベル", "theme": "テーマ案（1文）", "reason": "選定理由（1〜2文）"}}
 ]
 """
+
+
+def build_news_prompt(max_items: int) -> str:
+    today = date.today()
+    week_ago = today - timedelta(days=7)
+    return f"""あなたは、YouTubeチャンネル「プチ得ラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の企画担当です。
+Web検索を使って、食品業界全般に関する直近1週間以内のニュースがないか確認してください。
+
+# 検索対象期間
+本日は{today.isoformat()}です。{week_ago.isoformat()}以降に発表・報道された情報のみを対象にしてください。
+
+# 検索の観点（固定キーワードではなく、幅広く検索すること）
+チャンネルのコンセプト（コンビニ・スーパー・業務スーパーの商品・食のお得情報）に関連する、
+価格変動や新商品の動きを幅広く拾ってください。検索例（これに限定しない）：
+「コンビニ 値下げ」「スーパー 値下げ」「食品 値上げ」「米価格」
+「コンビニ 新商品」「業務スーパー 新商品」「コンビニ おにぎり」など
+
+# 採用条件
+- 実際にWeb検索で見つかった、実在する情報のみを使うこと（推測・創作は禁止）
+- 各項目には、検索で見つけた実際の情報源のURLを必ず含めること
+- 複数のニュースが見つかった場合は、視聴者の実際の買い物に直接関係が深いもの
+  （コンビニ・スーパーでの値下げ・値上げ・新商品など）を優先し、最大{max_items}件までに絞ること
+- 期間外（{week_ago.isoformat()}より前）の情報や、業界と無関係な一般ニュースは含めないこと
+- 該当する情報が1件も見つからない場合は、空配列を返すこと（無理に何か含めないこと）
+
+# 出力形式（厳守）
+説明文・前置き・後書きは一切書かず、以下の形式のJSON配列のみを出力してください（該当なしの場合は []）。
+マークダウンのコードブロック（```）も使わないでください。
+
+[
+  {{"theme": "動画の題材となる一言（例：〇〇が値下げ、〇〇が新発売、のような形）", "reason": "ニュースの概要と情報源URLを含む1〜2文"}}
+]
+"""
+
+
+def parse_breaking_news(result_text: str, max_items: int) -> list[dict]:
+    cleaned = strip_code_fence(result_text)
+    try:
+        items = json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(
+            f"速報ニュースのJSONを解析できませんでした。内容:\n{cleaned[:2000]}"
+        ) from exc
+
+    if not isinstance(items, list):
+        raise RuntimeError(f"速報ニュースがリスト形式ではありませんでした: {cleaned[:500]}")
+
+    valid = []
+    for i, item in enumerate(items):
+        if not isinstance(item, dict) or not all(k in item for k in ("theme", "reason")):
+            logger.warning("速報ニュースの形式不正のためスキップ（%d件目）: %s", i, item)
+            continue
+        if "http" not in item["reason"]:
+            logger.warning("速報ニュースにURLが含まれていない可能性があります（%d件目）: %s", i, item)
+        valid.append({"type": BREAKING_TYPE, "theme": item["theme"], "reason": item["reason"]})
+
+    return valid[:max_items]
+
+
+def check_breaking_news(timeout: int, claude_cmd: str, max_items: int) -> list[dict]:
+    prompt = build_news_prompt(max_items)
+    result_text = call_claude(prompt, timeout, claude_cmd, extra_args='--allowedTools "WebSearch"')
+    return parse_breaking_news(result_text, max_items)
 
 
 def parse_themes(result_text: str) -> list[dict]:
@@ -156,6 +221,9 @@ def main() -> int:
     parser.add_argument("--count", type=int, default=10, help="生成するテーマ案の件数（既定: 10）")
     parser.add_argument("--output", type=Path, default=DEFAULT_XLSX, help="出力するxlsxのパス")
     parser.add_argument("--timeout", type=int, default=180, help="claude呼び出しのタイムアウト秒数")
+    parser.add_argument("--news-timeout", type=int, default=240, help="速報ニュース検索のタイムアウト秒数")
+    parser.add_argument("--max-breaking", type=int, default=3, help="速報ショート型として採用する最大件数")
+    parser.add_argument("--skip-news", action="store_true", help="速報ニュース検索をスキップする")
     parser.add_argument("--dry-run", action="store_true", help="claudeを呼ばずダミーデータで動作確認する")
     parser.add_argument(
         "--claude-cmd",
@@ -169,12 +237,32 @@ def main() -> int:
     logger.info("=== テーマ案生成開始（count=%d, dry_run=%s） ===", args.count, args.dry_run)
 
     try:
+        breaking_items = []
+        if not args.skip_news:
+            try:
+                breaking_items = check_breaking_news(args.news_timeout, args.claude_cmd, args.max_breaking)
+                breaking_items = breaking_items[: args.count]
+                if breaking_items:
+                    logger.info("速報ニュースを%d件検出しました。", len(breaking_items))
+                else:
+                    logger.info("該当する速報ニュースは見つかりませんでした。")
+            except Exception as exc:
+                logger.warning("速報ニュース検索に失敗したため、通常のテーマ生成のみ行います: %s", exc)
+                breaking_items = []
+
+        remaining = max(args.count - len(breaking_items), 0)
+
         if args.dry_run:
-            themes = dummy_themes(args.count)
+            # ニュース検索は上で実際に実行済み。ここから先（通常テーマ生成）だけダミーにする。
+            evergreen_items = dummy_themes(remaining)
         else:
-            prompt = build_prompt(args.count)
-            result_text = call_claude(prompt, args.timeout, args.claude_cmd)
-            themes = parse_themes(result_text)
+            evergreen_items = []
+            if remaining > 0:
+                prompt = build_prompt(remaining)
+                result_text = call_claude(prompt, args.timeout, args.claude_cmd)
+                evergreen_items = parse_themes(result_text)
+
+        themes = breaking_items + evergreen_items
 
         append_to_xlsx(args.output, themes)
         logger.info("%d件のテーマ案を %s に追記しました。", len(themes), args.output)

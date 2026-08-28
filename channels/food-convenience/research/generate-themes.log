@@ -25,3 +25,18 @@
 2026-08-28 00:16:31,176 [INFO] === テーマ案生成開始（count=10, dry_run=False） ===
 2026-08-28 00:16:56,507 [INFO] 10件のテーマ案を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\research\theme-stock.xlsx に追記しました。
 2026-08-28 00:16:56,507 [INFO] === テーマ案生成成功 ===
+2026-08-28 13:30:33,497 [INFO] === テーマ案生成開始（count=10, dry_run=False） ===
+2026-08-28 13:31:40,827 [INFO] 速報ニュースを3件検出しました。
+2026-08-28 13:32:17,212 [INFO] 10件のテーマ案を channels\food-convenience\research\theme-stock-news-test.xlsx に追記しました。
+2026-08-28 13:32:17,212 [INFO] === テーマ案生成成功 ===
+2026-08-28 13:32:47,829 [INFO] === テーマ案生成開始（count=10, dry_run=True） ===
+2026-08-28 13:32:47,852 [INFO] 10件のテーマ案を channels\food-convenience\research\theme-stock-dryrun-test.xlsx に追記しました。
+2026-08-28 13:32:47,852 [INFO] === テーマ案生成成功 ===
+2026-08-28 13:35:16,521 [INFO] === テーマ案生成開始（count=10, dry_run=True） ===
+2026-08-28 13:36:39,176 [INFO] 速報ニュースを3件検出しました。
+2026-08-28 13:36:39,215 [INFO] 10件のテーマ案を channels\food-convenience\research\theme-stock-dryrun-verify.xlsx に追記しました。
+2026-08-28 13:36:39,215 [INFO] === テーマ案生成成功 ===
+2026-08-28 13:37:04,240 [INFO] === テーマ案生成開始（count=10, dry_run=False） ===
+2026-08-28 13:38:47,227 [INFO] 速報ニュースを3件検出しました。
+2026-08-28 13:39:34,769 [INFO] 10件のテーマ案を C:\Users\mikic\OneDrive\デスクトップ\YouTubeChannel\channels\food-convenience\research\theme-stock.xlsx に追記しました。
+2026-08-28 13:39:34,770 [INFO] === テーマ案生成成功 ===

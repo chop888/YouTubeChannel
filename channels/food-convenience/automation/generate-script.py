@@ -36,6 +36,7 @@ TYPE_TEMPLATE_FILES = {
     "雑学系": "trivia.md",
     "単品ディープダイブ": "deepdive.md",
     "定点観測": "pricewatch.md",
+    "速報ショート型": "breaking-short.md",
 }
 
 TYPE_SLUGS = {
@@ -45,6 +46,7 @@ TYPE_SLUGS = {
     "雑学系": "trivia",
     "単品ディープダイブ": "deepdive",
     "定点観測": "pricewatch",
+    "速報ショート型": "breaking",
 }
 
 TYPE_MARKER_RE = re.compile(r"<!--\s*type:\s*(.+?)\s*-->\s*\n*")

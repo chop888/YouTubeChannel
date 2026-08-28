@@ -47,8 +47,10 @@ def decode_safely(data: bytes | None) -> str:
     return data.decode("utf-8", errors="replace")
 
 
-def call_claude(prompt: str, timeout: int, claude_cmd: str = DEFAULT_CLAUDE_CMD) -> str:
+def call_claude(prompt: str, timeout: int, claude_cmd: str = DEFAULT_CLAUDE_CMD, extra_args: str = "") -> str:
     command = f'"{claude_cmd}" -p --output-format json'
+    if extra_args:
+        command += f" {extra_args}"
     try:
         proc = subprocess.run(
             command,
