@@ -124,11 +124,32 @@ def extract_char_targets(template_text: str) -> str:
     return "\n".join(lines)
 
 
+REACTION_PATTERN_RE = re.compile(
+    r"## ここなのリアクションパターン（重要）\n(.*?)(?=\n## |\Z)", re.DOTALL
+)
+
+
+def extract_reaction_pattern(template_text: str) -> str:
+    m = REACTION_PATTERN_RE.search(template_text)
+    if not m:
+        return ""
+    return m.group(1).strip()
+
+
 def build_known_type_prompt(
     theme: str, type_label: str, template_text: str, opening_text: str, characters_text: str, style_sample: str
 ) -> str:
     char_targets = extract_char_targets(template_text)
-    return f"""あなたは、YouTubeチャンネル「プチ得ラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の台本作家です。
+    reaction_pattern = extract_reaction_pattern(template_text)
+    reaction_block = (
+        f"""
+# ここなのリアクションパターン（必ず使い分けること）
+{reaction_pattern}
+"""
+        if reaction_pattern
+        else ""
+    )
+    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の台本作家です。
 以下の情報だけをもとに、今回のテーマの台本を1本、Markdown形式で書いてください。
 
 # 今回のテーマ
@@ -150,7 +171,7 @@ def build_known_type_prompt(
 - ここなのセリフも1〜2文（目安30〜80字）にし、「そうなんだ」のような相槌だけで終わらせず、
   自分の感想・具体的なエピソード・追加の疑問などを添えること
 - 「価格→特徴→リアクション」で終わらせず、背景・理由・具体例・比較の掘り下げを1往復ずつ追加すること
-
+{reaction_block}
 # 台本テンプレート（この構成・時間配分・セリフの型に厳密に従うこと）
 {template_text}
 
@@ -169,6 +190,7 @@ def build_known_type_prompt(
   「保存の許可」や「保存先の確認」などのやり取りは一切不要（そのような文面も書かないこと）
 - 冒頭に示した「各パートの目標文字数」を必ず守ること。相槌だけの短いセリフを連続させて終わらせず、
   説明・リアクション・具体例を厚めに書いて分量を確保すること
+- ここなのリアクションパターンが示されている場合は、それに従い、同じパターンの繰り返しを避けること
 - 実際の価格や数値データが不明な場合は「◯◯円」のようにダミー表記にし、末尾の「制作メモ」欄に差し替え箇所を明記すること
 - 企業の商品シリーズ名・キャンペーン名・製法名などの固有名詞を使う場合は、実在するか確信が持てなくても構わないので、
   その部分の直後に「※要確認」を必ず付けること（例：「おにぎり屋シリーズ※要確認」）。これは公開前の裏取りチェック漏れを防ぐためのマーカーであり、
@@ -187,7 +209,21 @@ def build_unknown_type_prompt(
     char_targets_block = "\n\n".join(
         f"【{label}】\n{extract_char_targets(text)}" for label, text in all_templates.items()
     )
-    return f"""あなたは、YouTubeチャンネル「プチ得ラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の台本作家です。
+    reaction_blocks = {
+        label: extract_reaction_pattern(text) for label, text in all_templates.items()
+    }
+    reaction_pattern_block = "\n\n".join(
+        f"【{label}】\n{pattern}" for label, pattern in reaction_blocks.items() if pattern
+    )
+    reaction_block = (
+        f"""
+# ここなのリアクションパターン（選んだ型に該当する指定があれば、必ず使い分けること）
+{reaction_pattern_block}
+"""
+        if reaction_pattern_block
+        else ""
+    )
+    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の台本作家です。
 以下のテーマは、まだ台本の型が決まっていません。6種類の型テンプレートの中から最も適したものを1つ選び、
 その型の構成に厳密に従って台本を1本、Markdown形式で書いてください。
 
@@ -207,7 +243,7 @@ def build_unknown_type_prompt(
 - ここなのセリフも1〜2文（目安30〜80字）にし、「そうなんだ」のような相槌だけで終わらせず、
   自分の感想・具体的なエピソード・追加の疑問などを添えること
 - 「価格→特徴→リアクション」で終わらせず、背景・理由・具体例・比較の掘り下げを1往復ずつ追加すること
-
+{reaction_block}
 # 型テンプレート一覧（この中から1つだけ選ぶこと）
 {templates_block}
 
@@ -232,6 +268,7 @@ def build_unknown_type_prompt(
   「保存の許可」や「保存先の確認」などのやり取りは一切不要（そのような文面も書かないこと）
 - 冒頭に示した「各パートの目標文字数」を必ず守ること。相槌だけの短いセリフを連続させて終わらせず、
   説明・リアクション・具体例を厚めに書いて分量を確保すること
+- ここなのリアクションパターンが示されている場合は、それに従い、同じパターンの繰り返しを避けること
 - 実際の価格や数値データが不明な場合は「◯◯円」のようにダミー表記にし、末尾の「制作メモ」欄に差し替え箇所を明記すること
 - 企業の商品シリーズ名・キャンペーン名・製法名などの固有名詞を使う場合は、実在するか確信が持てなくても構わないので、
   その部分の直後に「※要確認」を必ず付けること（例：「おにぎり屋シリーズ※要確認」）。これは公開前の裏取りチェック漏れを防ぐためのマーカーであり、

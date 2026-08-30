@@ -95,3 +95,13 @@ def strip_code_fence(text: str) -> str:
         text = re.sub(r"^```[a-zA-Z]*\n?", "", text)
         text = re.sub(r"\n?```$", "", text)
     return text.strip()
+
+
+def extract_json_array(text: str) -> str:
+    """コードフェンス除去後のテキストから、前置き文が混ざっていてもJSON配列部分だけを取り出す。"""
+    cleaned = strip_code_fence(text)
+    start = cleaned.find("[")
+    end = cleaned.rfind("]")
+    if start == -1 or end == -1 or end < start:
+        return cleaned
+    return cleaned[start : end + 1]
