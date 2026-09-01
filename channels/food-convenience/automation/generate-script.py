@@ -280,6 +280,102 @@ def build_unknown_type_prompt(
 """
 
 
+DIALOGUE_LINE_RE = re.compile(r"^\*\*(?:えりか|ここな|えりか・ここな)\*\*：(.+)$", re.MULTILINE)
+
+
+def count_dialogue_chars(script_text: str) -> int:
+    return sum(len(m.strip()) for m in DIALOGUE_LINE_RE.findall(script_text))
+
+
+def build_verification_prompt(
+    theme: str,
+    type_label: str,
+    script_text: str,
+    char_targets: str,
+    reaction_pattern: str,
+    actual_chars: int,
+) -> str:
+    char_targets_block = char_targets or "（このテンプレートには目標文字数の定義がありません）"
+    reaction_block = reaction_pattern or "（このテンプレートには、ここなのリアクションパターンの定義がありません）"
+    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の
+台本のファクトチェック・品質チェック担当です。
+以下の台本1本について、Web検索を使いながら検証レポートを作成してください。
+
+# 今回のテーマ
+{theme}
+
+# 今回の型
+{type_label}
+
+# 台本本文
+{script_text}
+
+# 目標文字数（参考）
+{char_targets_block}
+
+# プログラムで実測したセリフ本文の合計文字数（句読点・記号含む、話者名は除く）
+{actual_chars}字
+
+# この型で指定されている、ここなのリアクションパターン（参考）
+{reaction_block}
+
+# 検証タスク
+以下の4項目を必ず検証し、指定の出力形式でレポートを作成してください。
+
+## 1. 事実確認（価格情報・固有名詞）
+台本本文から、価格情報（金額・容量など）と、企業の商品シリーズ名・キャンペーン名・製法名などの
+固有名詞をすべて抽出し、それぞれについてWeb検索を使って実在・正確性を確認すること。
+- 「◯◯円」のようなダミー表記や、末尾の制作メモに差し替え予定と明記されている箇所は対象外にしてよい
+- 台本内に「※要確認」マーカーが付いている固有名詞は、特に優先して検索確認すること
+
+## 2. 表現チェック
+批判的・ネガティブな表現（特定の商品・企業を下げるような言い方、不安を煽る表現など）が
+含まれていないか確認すること。
+
+## 3. 文字数チェック
+上記の「プログラムで実測した合計文字数」と「目標文字数」の合計を比較し、大きく不足していないか
+（目安として8割未満なら要確認）を確認すること。文字数の実測はプログラム側で行っているため、
+あなた自身で文字数を数え直す必要はない。
+
+## 4. ここなのリアクションパターンチェック
+台本内のここなのリアクションが、指定されたパターン（複数ある場合）に沿っているか、
+特定の1パターン（例：「納得」ばかり）に偏っていないかを確認すること。
+この型にリアクションパターンの定義がない場合は「対象外」と記載してよい。
+
+# 出力形式（厳守）
+説明文・前置き・後書きは一切書かず、以下の形式のMarkdownレポート本文のみを出力してください。
+マークダウンのコードブロック（```）で全体を囲まないでください。
+
+各項目は、確認できた場合は「✅確認済み（情報源URL）」、確認できなかった場合は
+「⚠️要確認：理由」、ルール違反の疑いがある場合は「⚠️要確認：該当箇所と理由」の形式で書くこと。
+
+```
+# 検証レポート：{{テーマ名}}
+
+## 1. 事実確認（価格情報・固有名詞）
+- {{項目名}}：✅確認済み（{{URL}}） または ⚠️要確認：{{理由}}
+（台本内に価格・固有名詞が1件もない場合は「該当項目なし」と記載）
+
+## 2. 表現チェック
+- ✅問題なし　または　⚠️要確認：{{該当箇所と理由}}
+
+## 3. 文字数チェック
+- 実測：{{actual_chars}}字／目標：{{目標文字数の合計}}字 → ✅達成　または　⚠️要確認：{{理由}}
+
+## 4. ここなのリアクションパターンチェック
+- ✅バランス良好　または　⚠️要確認：{{理由}}　または　対象外
+
+## サマリー
+- ⚠️要確認の件数：{{N}}件
+- 特に優先して確認すべき項目：{{あれば箇条書き、なければ「なし」}}
+```
+"""
+
+
+def verification_path_for(output_path: Path) -> Path:
+    return output_path.with_name(f"{output_path.stem}.verification{output_path.suffix}")
+
+
 def extract_type_marker(text: str) -> tuple[str | None, str]:
     match = TYPE_MARKER_RE.match(text.strip())
     if not match:
@@ -331,6 +427,8 @@ def main() -> int:
     parser.add_argument("--xlsx", type=Path, default=DEFAULT_XLSX, help="theme-stock.xlsxのパス")
     parser.add_argument("--output-dir", type=Path, default=SCRIPTS_DIR, help="台本の保存先ディレクトリ")
     parser.add_argument("--timeout", type=int, default=300, help="claude呼び出しのタイムアウト秒数")
+    parser.add_argument("--verify-timeout", type=int, default=300, help="検証パス（Web検索含む）のタイムアウト秒数")
+    parser.add_argument("--skip-verification", action="store_true", help="生成後の検証パスをスキップする")
     parser.add_argument("--dry-run", action="store_true", help="claudeを呼ばずダミー台本で動作確認する")
     parser.add_argument(
         "--claude-cmd",
@@ -367,6 +465,8 @@ def main() -> int:
                 "テーマ「%s」はtheme-stock.xlsxに見つからないため、型をclaudeに判断させます。", theme
             )
 
+        verification_template_text = None
+
         if args.dry_run:
             chosen_type = type_label or "比較(2項目)"
             script_text = dummy_script(theme, chosen_type)
@@ -378,6 +478,7 @@ def main() -> int:
             result_text = call_claude(prompt, args.timeout, args.claude_cmd)
             script_text = strip_code_fence(result_text)
             chosen_type = type_label
+            verification_template_text = template_text
         else:
             all_templates = {
                 label: load_text(TEMPLATES_DIR / filename) for label, filename in TYPE_TEMPLATE_FILES.items()
@@ -389,6 +490,7 @@ def main() -> int:
             if marker_type in TYPE_TEMPLATE_FILES:
                 chosen_type = marker_type
                 logger.info("claudeが型を「%s」と判断しました。", chosen_type)
+                verification_template_text = all_templates.get(chosen_type)
             else:
                 logger.warning("claudeが返した型ラベルを認識できませんでした: %s", marker_type)
                 chosen_type = "theme"
@@ -412,6 +514,26 @@ def main() -> int:
             logger.info(
                 "theme-stock.xlsxの%d行目のステータスを「%s」に更新しました。", row["row_idx"], STATUS_SCRIPTED
             )
+
+        if not args.dry_run and not args.skip_verification:
+            try:
+                char_targets = extract_char_targets(verification_template_text) if verification_template_text else ""
+                reaction_pattern = (
+                    extract_reaction_pattern(verification_template_text) if verification_template_text else ""
+                )
+                actual_chars = count_dialogue_chars(script_text)
+                verify_prompt = build_verification_prompt(
+                    theme, chosen_type, script_text, char_targets, reaction_pattern, actual_chars
+                )
+                verify_result = call_claude(
+                    verify_prompt, args.verify_timeout, args.claude_cmd, extra_args='--allowedTools "WebSearch"'
+                )
+                report_text = strip_code_fence(verify_result)
+                verification_path = verification_path_for(output_path)
+                verification_path.write_text(report_text.strip() + "\n", encoding="utf-8")
+                logger.info("検証レポートを %s に保存しました。", verification_path)
+            except Exception as exc:
+                logger.warning("検証パスに失敗しましたが、台本生成自体は成功として扱います: %s", exc)
 
         logger.info("=== 台本生成成功 ===")
         return 0
