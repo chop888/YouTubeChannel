@@ -120,6 +120,8 @@ def extract_char_targets(template_text: str) -> str:
     for m in CHAR_TARGET_ROW_RE.finditer(template_text):
         section = m.group("section").strip().strip("*").strip()
         chars = m.group("chars").strip().strip("*").strip()
+        if section == "セクション" or chars == "目安文字数":
+            continue
         lines.append(f"- {section}：{chars}")
     return "\n".join(lines)
 
@@ -136,6 +138,31 @@ def extract_reaction_pattern(template_text: str) -> str:
     return m.group(1).strip()
 
 
+RHYTHM_PRINCIPLE_RE = re.compile(
+    r"(### 原則1：.*?)\n### 語尾・言葉選びのバリエーション", re.DOTALL
+)
+
+
+def extract_rhythm_principles(characters_text: str) -> str:
+    m = RHYTHM_PRINCIPLE_RE.search(characters_text)
+    if not m:
+        return ""
+    return m.group(1).strip()
+
+
+def build_rhythm_principle_block(characters_text: str) -> str:
+    principles = extract_rhythm_principles(characters_text)
+    if not principles:
+        return ""
+    return f"""
+# セリフのリズムに関する最重要原則（必ず守ること）
+{principles}
+
+上記は「この中から選ぶ」チェックリストではない。常に意識すべき2つの考え方であり、
+具体的なセリフはフレーズ集や分類に頼らず、その都度自然に考えること。
+"""
+
+
 def build_known_type_prompt(
     theme: str, type_label: str, template_text: str, opening_text: str, characters_text: str, style_sample: str
 ) -> str:
@@ -149,7 +176,8 @@ def build_known_type_prompt(
         if reaction_pattern
         else ""
     )
-    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の台本作家です。
+    rhythm_principle_block = build_rhythm_principle_block(characters_text)
+    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（日本の食にまつわる雑学・発見チャンネル）の台本作家です。
 以下の情報だけをもとに、今回のテーマの台本を1本、Markdown形式で書いてください。
 
 # 今回のテーマ
@@ -171,7 +199,7 @@ def build_known_type_prompt(
 - ここなのセリフも1〜2文（目安30〜80字）にし、「そうなんだ」のような相槌だけで終わらせず、
   自分の感想・具体的なエピソード・追加の疑問などを添えること
 - 「価格→特徴→リアクション」で終わらせず、背景・理由・具体例・比較の掘り下げを1往復ずつ追加すること
-{reaction_block}
+{reaction_block}{rhythm_principle_block}
 # 台本テンプレート（この構成・時間配分・セリフの型に厳密に従うこと）
 {template_text}
 
@@ -191,6 +219,7 @@ def build_known_type_prompt(
 - 冒頭に示した「各パートの目標文字数」を必ず守ること。相槌だけの短いセリフを連続させて終わらせず、
   説明・リアクション・具体例を厚めに書いて分量を確保すること
 - ここなのリアクションパターンが示されている場合は、それに従い、同じパターンの繰り返しを避けること
+- セリフのリズムに関する最重要原則が示されている場合は、それに従い、機械的な交互発言や決まった言い回しの使い回しを避けること
 - 実際の価格や数値データが不明な場合は「◯◯円」のようにダミー表記にし、末尾の「制作メモ」欄に差し替え箇所を明記すること
 - 企業の商品シリーズ名・キャンペーン名・製法名などの固有名詞を使う場合は、実在するか確信が持てなくても構わないので、
   その部分の直後に「※要確認」を必ず付けること（例：「おにぎり屋シリーズ※要確認」）。これは公開前の裏取りチェック漏れを防ぐためのマーカーであり、
@@ -223,7 +252,8 @@ def build_unknown_type_prompt(
         if reaction_pattern_block
         else ""
     )
-    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の台本作家です。
+    rhythm_principle_block = build_rhythm_principle_block(characters_text)
+    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（日本の食にまつわる雑学・発見チャンネル）の台本作家です。
 以下のテーマは、まだ台本の型が決まっていません。6種類の型テンプレートの中から最も適したものを1つ選び、
 その型の構成に厳密に従って台本を1本、Markdown形式で書いてください。
 
@@ -243,7 +273,7 @@ def build_unknown_type_prompt(
 - ここなのセリフも1〜2文（目安30〜80字）にし、「そうなんだ」のような相槌だけで終わらせず、
   自分の感想・具体的なエピソード・追加の疑問などを添えること
 - 「価格→特徴→リアクション」で終わらせず、背景・理由・具体例・比較の掘り下げを1往復ずつ追加すること
-{reaction_block}
+{reaction_block}{rhythm_principle_block}
 # 型テンプレート一覧（この中から1つだけ選ぶこと）
 {templates_block}
 
@@ -269,6 +299,7 @@ def build_unknown_type_prompt(
 - 冒頭に示した「各パートの目標文字数」を必ず守ること。相槌だけの短いセリフを連続させて終わらせず、
   説明・リアクション・具体例を厚めに書いて分量を確保すること
 - ここなのリアクションパターンが示されている場合は、それに従い、同じパターンの繰り返しを避けること
+- セリフのリズムに関する最重要原則が示されている場合は、それに従い、機械的な交互発言や決まった言い回しの使い回しを避けること
 - 実際の価格や数値データが不明な場合は「◯◯円」のようにダミー表記にし、末尾の「制作メモ」欄に差し替え箇所を明記すること
 - 企業の商品シリーズ名・キャンペーン名・製法名などの固有名詞を使う場合は、実在するか確信が持てなくても構わないので、
   その部分の直後に「※要確認」を必ず付けること（例：「おにぎり屋シリーズ※要確認」）。これは公開前の裏取りチェック漏れを防ぐためのマーカーであり、
@@ -297,7 +328,7 @@ def build_verification_prompt(
 ) -> str:
     char_targets_block = char_targets or "（このテンプレートには目標文字数の定義がありません）"
     reaction_block = reaction_pattern or "（このテンプレートには、ここなのリアクションパターンの定義がありません）"
-    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（コンビニ・スーパー・業務スーパーの商品比較チャンネル）の
+    return f"""あなたは、YouTubeチャンネル「プチ得グルメラボ」（日本の食にまつわる雑学・発見チャンネル）の
 台本のファクトチェック・品質チェック担当です。
 以下の台本1本について、Web検索を使いながら検証レポートを作成してください。
 
